@@ -4,7 +4,15 @@ import { useState } from "react";
 import ManageUsers from "@/app/dashboard/manage-users/page";
 import ManageContent from "@/app/dashboard/manage-content/page";
 import ViewOrders from "@/app/dashboard/view-orders/page";
-import { Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarProvider } from "@/components/ui/sidebar";
+import {
+  Sidebar,
+  SidebarHeader,
+  SidebarContent,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarProvider,
+} from "@/components/ui/sidebar";
 import Link from "next/link";
 import { Users, FileText, ShoppingCart } from "lucide-react";
 
@@ -27,7 +35,7 @@ export default function AdminDashboard() {
   return (
     <SidebarProvider>
       <div className="flex">
-        <Sidebar>
+        <Sidebar className="fixed left-0 top-0 h-full z-10">
           <SidebarHeader className="p-4">
             <h2 className="text-xl font-bold">Admin Menu</h2>
           </SidebarHeader>
@@ -60,7 +68,7 @@ export default function AdminDashboard() {
             </SidebarMenu>
           </SidebarContent>
         </Sidebar>
-        <div className="flex-1 p-4">
+        <div className="flex-1 ml-64 p-4 min-h-screen flex items-center justify-center relative z-0">
           {renderContent()}
         </div>
       </div>

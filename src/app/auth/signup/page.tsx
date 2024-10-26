@@ -1,65 +1,48 @@
-"use client"; // Add this line at the top
+"use client";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
+import { useState } from "react";
 
-const Signup = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
+const SignupPage = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
+  const handleSignup = async () => {
+    const response = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    if (response.ok) {
+      alert("Account created successfully");
+    } else {
+      alert("Failed to create account");
     }
-    
-    setError(""); // Reset error message
-    // Handle signup logic here (e.g., call an API)
-    console.log('Signing up:', { email, password });
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <h1 className="text-3xl font-bold mb-4">Signup</h1>
-      <form onSubmit={handleSignup} className="w-1/3 bg-white p-6 rounded shadow-md">
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="p-8 bg-white shadow rounded">
+        <h2 className="text-2xl font-bold">Sign Up</h2>
         <input
           type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="border border-gray-300 p-2 mb-4 w-full rounded"
-          required
+          className="mt-4 p-2 border rounded"
         />
         <input
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="border border-gray-300 p-2 mb-4 w-full rounded"
-          required
+          className="mt-4 p-2 border rounded"
         />
-        <input
-          type="password"
-          placeholder="Confirm Password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          className="border border-gray-300 p-2 mb-4 w-full rounded"
-          required
-        />
-        {error && <p className="text-red-600 mb-4">{error}</p>}
-        <button type="submit" className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">
-          Signup
+        <button onClick={handleSignup} className="mt-4 p-2 bg-green-500 text-white rounded">
+          Sign Up
         </button>
-      </form>
-      <p className="mt-4">
-        Already have an account? <Link href="/auth/login" className="text-blue-600 hover:underline">Login</Link>
-      </p>
+      </div>
     </div>
   );
 };
 
-export default Signup;
+export default SignupPage;
