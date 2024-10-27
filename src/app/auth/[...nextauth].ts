@@ -1,47 +1,69 @@
-// src/app/auth/[...nextauth].ts
-import NextAuth from 'next-auth';
+import NextAuth, { AuthOptions, User as NextAuthUser } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { MongoDBAdapter } from '@next-auth/mongodb-adapter';
-import clientPromise from '@/lib/mongodb'; // Ensure this is correctly imported
-import { User as UserModel } from '@/models/User'; // Adjusted to use named import
-import type { AuthOptions } from 'next-auth'; // Import AuthOptions type for TypeScript
-import type { User } from 'next-auth'; // Import User type from NextAuth
+import { validateUser } from '@/lib/user'; // Ensure this function is properly defined
+import UserModel, { IUser } from '@/models/User'; // Ensure this import is correct
+import { AdapterUser } from 'next-auth/adapters';
 
-export const authOptions: AuthOptions = { // Specify AuthOptions type
+// Extend NextAuth User type globally to include isAdmin
+interface CustomUser extends NextAuthUser {
+  isAdmin?: boolean; // Optional property
+}
+
+// Custom type guard to check if user is of type CustomUser
+function isCustomUser(user: NextAuthUser | AdapterUser): user is CustomUser {
+  return (user as CustomUser).isAdmin !== undefined;
+}
+
+export const authOptions: AuthOptions = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        email: { label: 'Email', type: 'text', placeholder: 'example@example.com' },
-        password: { label: 'Password', type: 'password' },
+        email: { label: "Email", type: "text" },
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        // Check if credentials is defined before accessing properties
         if (!credentials) {
           throw new Error('No credentials provided');
         }
 
-        const user = await UserModel.findOne({ email: credentials.email });
-
-        // Add your logic to validate the user password, e.g., using bcrypt
-        // You should hash the password in the database and use bcrypt.compare here
-        if (user && user.password === credentials.password) { // Replace with bcrypt.compare
+        try {
+          const user: IUser = await validateUser(credentials.email, credentials.password);
           return {
             id: user._id.toString(), // Convert ObjectId to string
             email: user.email,
-            // Add any other properties required by your application
-          } as User; // Cast to User type
+            isAdmin: user.isAdmin, // Assuming isAdmin is a property on your user model
+          } as CustomUser; // Cast to CustomUser
+        } catch (error) {
+          throw new Error('Invalid email or password');
         }
-
-        throw new Error('Invalid email or password');
       },
     }),
   ],
-  adapter: MongoDBAdapter(clientPromise),
   session: {
-    strategy: 'jwt' as const, // Specify as const for TypeScript compatibility
+    strategy: 'jwt',
   },
-  secret: process.env.NEXTAUTH_SECRET, // Ensure you have this in your .env file
+  callbacks: {
+    async jwt({ token, user }) {
+      // Ensure that token is properly typed
+      if (user) {
+        token.id = (user as CustomUser).id; // Type assertion to CustomUser
+        if (isCustomUser(user)) {
+          token.isAdmin = user.isAdmin; // Assign isAdmin if user is CustomUser
+        }
+      }
+      return token; // Return the token without explicit casting
+    },
+    async session({ session, token }) {
+      // Ensure token properties are typed correctly
+      session.user.id = token.id as string; // Ensure token.id is treated as a string
+      session.user.isAdmin = token.isAdmin as boolean; // Ensure token.isAdmin is treated as a boolean
+      return session; // Return session
+    },
+  },
+  pages: {
+    signIn: '/auth/login', // Your custom login page
+  },
 };
 
 export default NextAuth(authOptions);

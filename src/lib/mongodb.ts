@@ -1,19 +1,15 @@
 // src/lib/mongodb.ts
+import { MongoClient, Db } from 'mongodb';
 
-import { MongoClient } from 'mongodb';
-
+const uri = process.env.MONGODB_URI || '';
 let client: MongoClient;
-let clientPromise: Promise<MongoClient>;
+let db: Db;
 
-if (process.env.NODE_ENV === 'development') {
-  if (!global._mongoClientPromise) {
-    client = new MongoClient(process.env.MONGODB_URI || '');
-    global._mongoClientPromise = client.connect();
+export async function connectToDatabase() {
+  if (!client) {
+    client = new MongoClient(uri);
+    await client.connect();
+    db = client.db('academic-writing'); // Adjust database name as necessary
   }
-  clientPromise = global._mongoClientPromise;
-} else {
-  client = new MongoClient(process.env.MONGODB_URI || '');
-  clientPromise = client.connect();
+  return { client, db };
 }
-
-export default clientPromise;

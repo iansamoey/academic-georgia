@@ -1,58 +1,59 @@
 // src/app/auth/login/page.tsx
-"use client"; // Add this directive to indicate that this is a client component
+
+"use client"; // This directive makes this file a client component
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 
 const LoginPage = () => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const result = await signIn('credentials', {
+      email,
+      password,
+      redirect: false,
+    });
 
-        const response = await fetch('/api/users/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ email, password }),
-        });
+    if (result?.error) {
+      setError(result.error);
+    } else {
+      router.push('/dashboard/userDashboard'); // Redirect to the dashboard on successful login
+    }
+  };
 
-        if (response.ok) {
-            const { user } = await response.json();
-            // Handle successful login (e.g., redirect to dashboard)
-            console.log('Logged in:', user);
-        } else {
-            const { error } = await response.json();
-            setError(error); // Display error message
-        }
-    };
-
-    return (
-        <form onSubmit={handleSubmit}>
-            <div>
-                <label>Email:</label>
-                <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                />
-            </div>
-            <div>
-                <label>Password:</label>
-                <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                />
-            </div>
-            <button type="submit">Login</button>
-            {error && <p>{error}</p>}
-        </form>
-    );
+  return (
+    <div>
+      <h1>Login</h1>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+      <form onSubmit={handleLogin}>
+        <div>
+          <label>Email:</label>
+          <input
+            type="text"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <label>Password:</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        <button type="submit">Login</button>
+      </form>
+    </div>
+  );
 };
 
 export default LoginPage;
